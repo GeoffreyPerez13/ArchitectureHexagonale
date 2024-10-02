@@ -5,6 +5,11 @@ import { ChangeSeats } from "./change-seats"
 import { InMemoryConferenceRepository } from "../adapters/in-memory-conference-repository"
 
 describe("Feature: Changing the number of seats", () => {
+    async function expectSeatsUnchange() {
+        const fetchedConference = await repository.findById(conference.props.id)
+        expect(fetchedConference?.props.seats).toEqual(50)
+    }
+
     const johnDoe = new User({
         id: 'john-doe',
         emailAddress: 'johndoe@gmail.com',
@@ -16,7 +21,7 @@ describe("Feature: Changing the number of seats", () => {
         emailAddress: 'bob@gmail.com',
         password: 'qwerty'
     })
-    
+
     const conference = new Conference({
         id: 'id-1',
         organizerId: johnDoe.props.id,
@@ -44,8 +49,7 @@ describe("Feature: Changing the number of seats", () => {
             })
 
             const fetchedConference = await repository.findById(conference.props.id)
-
-            expect(fetchedConference!.props.seats).toEqual(100)
+            expect(fetchedConference?.props.seats).toEqual(100) // Vérifie que les sièges ont bien changé
         })
     })
 
@@ -62,10 +66,36 @@ describe("Feature: Changing the number of seats", () => {
     describe('Scenario: Update the conference of someone else', () => {
         it('should fail', async () => {
             await expect(useCase.execute({
-                user: johnDoe,
+                user: bob, // Utilisation de bob au lieu de johnDoe
                 conferenceId: conference.props.id,
                 seats: 100
             })).rejects.toThrow('You are not allowed to update this conference')
+
+            await expectSeatsUnchange()
         }) 
+    })
+
+    describe('Scenario: Number of seats <= 1000', () => {
+        it('should fail', async () => {
+            await expect(useCase.execute({
+                user: johnDoe,
+                conferenceId: conference.props.id,
+                seats: 10001
+            })).rejects.toThrow('The conference must have a maximum of 1000 seats and a minimum of 20 seats')
+
+            await expectSeatsUnchange()
+        })
+    })
+
+    describe('Scenario: Number of seats >= 20', () => {
+        it('should fail', async () => {
+            await expect(useCase.execute({
+                user: johnDoe,
+                conferenceId: conference.props.id,
+                seats: 15
+            })).rejects.toThrow('The conference must have a maximum of 1000 seats and a minimum of 20 seats')
+
+            await expectSeatsUnchange()
+        })
     })
 })
