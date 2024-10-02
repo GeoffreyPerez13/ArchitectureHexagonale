@@ -32,14 +32,14 @@ describe('Authentication', () => {
         })
     })
 
-    describe.only('Scenario: email is not valid', () => {
+    describe('Scenario: email is not valid', () => {
         it('should throw an error', async () => {
             const payload = Buffer.from('unknown@gmail.com:qwerty').toString('base64')
             await expect(authenticator.authenticate(payload)).rejects.toThrow("Wrong credentials")
         })
     })
 
-    describe.only('Scenario: password is not valid', () => {
+    describe('Scenario: password is not valid', () => {
         it('should throw an error', async () => {
             const payload = Buffer.from('unknown@gmail.com:wrong-password').toString('base64')
             await expect(authenticator.authenticate(payload)).rejects.toThrow("Wrong credentials")

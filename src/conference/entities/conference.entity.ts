@@ -28,4 +28,8 @@ export class Conference {
     isTooLong() : boolean {
         return differenceInHours(this.props.endDate, this.props.startDate) > 3
     }
+
+    update(data: Partial<ConferenceProps>) {
+        this.props = {...this.props, ...data}
+    }
 }
