@@ -41,7 +41,7 @@ describe('Feature: Change Dates', () => {
                                 .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
                                 .send({startDate, endDate})
 
-                                console.log(result)
+                                
             expect(result.status).toBe(200)
     
             const conferenceRepository = container.resolve('conferenceRepository') as IConferenceRepository
