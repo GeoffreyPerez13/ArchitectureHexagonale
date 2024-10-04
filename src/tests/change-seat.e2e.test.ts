@@ -22,20 +22,20 @@ describe('Feature: Change the number of seats', () => {
     })
 
     describe('Scenario: Happy path', () => {
-        it('should change the number of seats', async() => {
+        it('should change the number of seats', async () => {
             const seats = 100
-            const id = 'id-1'
-    
+            const id = e2eConference.conference1.entity.props.id
+
             const result = await request(app)
-                                .patch(`/conference/seats/${id}`)
-                                .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
-                                .send({seats})
-    
+                .patch(`/conference/seats/${id}`)
+                .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
+                .send({ seats })
+
             expect(result.status).toBe(200)
-    
+
             const conferenceRepository = container.resolve('conferenceRepository') as IConferenceRepository
             const fetchedConference = await conferenceRepository.findById(id)
-    
+
             expect(fetchedConference).toBeDefined()
             expect(fetchedConference?.props.seats).toEqual(seats)
         })
@@ -44,13 +44,42 @@ describe('Feature: Change the number of seats', () => {
     describe('Scenario: User is not authorized', () => {
         it('should return 403 Unauthorized', async () => {
             const seats = 100
-            const id = 'id-1'
-    
+            const id = e2eConference.conference1.entity.props.id
+
             const result = await request(app)
-                                .patch(`/conference/seats/${id}`)
-                                .send({seats})
-            
+                .patch(`/conference/seats/${id}`)
+                .send({ seats })
+
             expect(result.status).toBe(403)
         })
     })
+
+    describe('Scenario: Not enough seats available', () => {
+        it('should return 400 Bad Request if trying to set fewer seats than booked', async () => {
+            const conferenceRepository = container.resolve('conferenceRepository') as IConferenceRepository;
+            const conference = await conferenceRepository.findById(e2eConference.conference1.entity.props.id);
+    
+            expect(conference).toBeDefined();
+            if (!conference) {
+                throw new Error("Conference not found");
+            }
+    
+            const totalSeats = conference.props.seats;
+            const bookedSeats = await conferenceRepository.bookedSeats(conference.props.id);
+    
+            if (totalSeats === undefined) {
+                throw new Error("Total seats not defined");
+            }
+    
+            const newSeats = totalSeats - bookedSeats - 1;
+    
+            const result = await request(app)
+                .patch(`/conference/seats/${conference.props.id}`)
+                .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
+                .send({ seats: newSeats });
+    
+            expect(result.status).toBe(400);
+            expect(result.body.error).toEqual("Cannot reduce seats below the number of booked seats");
+        });
+    });
 })

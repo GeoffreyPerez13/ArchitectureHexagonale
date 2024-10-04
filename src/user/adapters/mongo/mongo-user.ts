@@ -1,20 +1,24 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
+const ReservationSchema = new Schema({
+    conferenceId: { type: String, required: true },
+    seats: { type: Number, required: true }
+});
 
 export namespace MongoUser {
-    export const CollectionName = 'users'
-
     export interface UserDocument extends Document {
-        _id: string
+        _id: string;
         emailAddress: string;
-        password: string
+        password: string;
+        reservations: { conferenceId: string; seats: number }[];
     }
 
-    export const UserSchema = new Schema<UserDocument>({
-        _id: {type: String, required: true},
-        emailAddress: {type: String, required: true, unique: true},
-        password: {type: String, required: true}
-    })
+    const UserSchema = new Schema({
+        _id: { type: String, required: true },
+        emailAddress: { type: String, required: true },
+        password: { type: String, required: true },
+        reservations: [ReservationSchema]
+    });
 
-    export const UserModel = mongoose.model<UserDocument>(CollectionName, UserSchema)
+    export const UserModel = mongoose.model<UserDocument>('User', UserSchema);
 }

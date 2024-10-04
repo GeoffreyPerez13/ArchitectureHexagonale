@@ -7,7 +7,8 @@ import { IConferenceRepository } from "../ports/conference-repository.interface"
 type RequestChangeSeats = {
     user: User,
     conferenceId: string,
-    seats: number
+    seats: number,
+    bookedSeats?: string[];
 }
 
 type ResponseChangeSeats = void

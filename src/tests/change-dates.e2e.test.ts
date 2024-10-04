@@ -39,7 +39,9 @@ describe('Feature: Change Dates', () => {
             const result = await request(app)
                                 .patch(`/conference/dates/${id}`)
                                 .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
-                                .send({startDate, endDate})
+                                .send({
+                                    startDate: startDate.toISOString(),
+                                    endDate: endDate.toISOString()})
 
                                 
             expect(result.status).toBe(200)
@@ -61,7 +63,10 @@ describe('Feature: Change Dates', () => {
     
             const result = await request(app)
                                 .patch(`/conference/dates/${id}`)
-                                .send({startDate, endDate})
+                                .send({
+                                    startDate: startDate.toISOString(),
+                                    endDate: endDate.toISOString()
+                                })
             
             expect(result.status).toBe(403)
         })
