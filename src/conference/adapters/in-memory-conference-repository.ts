@@ -1,8 +1,6 @@
 import { Conference } from "../entities/conference.entity"
 import { IConferenceRepository } from "../ports/conference-repository.interface"
 
-
-
 export class InMemoryConferenceRepository implements IConferenceRepository {
     database: Conference[] = []
 

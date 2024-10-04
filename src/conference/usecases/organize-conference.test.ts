@@ -1,9 +1,10 @@
 import { FixedDateGenerator } from "../../core/adapters/fixed-date-generator"
 import { FixedIDGenerator } from "../../core/adapters/fixed-id-generator"
-import { Conference } from "../entities/conference.entity"
 import { User } from "../../user/entities/user.entity"
-import { OrganizeConference } from "./organize-conference"
 import { InMemoryConferenceRepository } from "../adapters/in-memory-conference-repository"
+import { Conference } from "../entities/conference.entity"
+import { OrganizeConference } from "./organize-conference"
+
 
 describe("Feature: Organize conference", () => {
     function expectConferenceToEqual(conference: Conference) {
@@ -19,7 +20,7 @@ describe("Feature: Organize conference", () => {
 
     const johnDoe = new User({
         id: 'john-doe',
-        emailAddress: 'johndoa@gmail.com',
+        emailAddress: 'johndoe@gmail.com',
         password: 'qwerty'
     })
 
@@ -44,7 +45,6 @@ describe("Feature: Organize conference", () => {
             endDate: new Date('2024-09-01T11:00:00.000Z')
         }
 
-
         it('should return the ID', async () => {
             const result = await useCase.execute(payload)
             expect(result.id).toEqual('id-1')
@@ -60,33 +60,31 @@ describe("Feature: Organize conference", () => {
         })
     })
 
-    describe('Scenario: conference happens to soon', () => {
+    describe('Scenario: the conference happens too soon', () => {
         const payload = {
             user: johnDoe,
             title: "My first conference",
             seats: 100,
-            startDate: new Date('2024-01-01T10:00:00.000Z'),
+            startDate: new Date('2024-01-02T10:00:00.000Z'),
             endDate: new Date('2024-01-02T11:00:00.000Z')
         }
 
         it('should throw an error', async () => {
             await expect(() => useCase.execute(payload))
-                .rejects
-                .toThrow('The conference must happen in at least 3 days')
-        })
-    
-        it('should not creat a conference', async () => {
-            try {
-                await expect(() => useCase.execute(payload))
                     .rejects
-                    .toThrow()
+                    .toThrow("The conference must happen in at least 3 days")
+        })
+
+        it('should not create a conference', async () => {
+            try {
+                await expect(() => useCase.execute(payload)).rejects.toThrow()
             } catch (error) {}
 
             expect(repository.database.length).toBe(0)
         })
-    })  
+    })
 
-    describe('Scenario: The conference has too many seats', () => {
+    describe('Scenario: the conference has too many seats', () => {
         const payload = {
             user: johnDoe,
             title: "My first conference",
@@ -96,21 +94,21 @@ describe("Feature: Organize conference", () => {
         }
 
         it('should throw an error', async () => {
-            await expect(() => useCase.execute(payload)).rejects.toThrow('The conference must have a maximum of 1000 seats')
+            await expect(() => useCase.execute(payload))
+                    .rejects
+                    .toThrow("The conference must have a maximum of 1000 seats")
         })
 
-        it('should not creat a conference', async () => {
+        it('should not create a conference', async () => {
             try {
-                await expect(() => useCase.execute(payload))
-                    .rejects
-                    .toThrow()
+                await expect(() => useCase.execute(payload)).rejects.toThrow()
             } catch (error) {}
 
             expect(repository.database.length).toBe(0)
         })
     })
 
-    describe('Scenario: The conference don\t have enough seats', () => {
+    describe('Scenario: the conference don\'t have enough seats', () => {
         const payload = {
             user: johnDoe,
             title: "My first conference",
@@ -121,22 +119,20 @@ describe("Feature: Organize conference", () => {
 
         it('should throw an error', async () => {
             await expect(() => useCase.execute(payload))
-                .rejects
-                .toThrow('The conference must have at least 20 seats')
+                    .rejects
+                    .toThrow("The conference must have at least 20 seats")
         })
 
-        it('should not creat a conference', async () => {
+        it('should not create a conference', async () => {
             try {
-                await expect(() => useCase.execute(payload))
-                .rejects
-                .toThrow()
+                await expect(() => useCase.execute(payload)).rejects.toThrow()
             } catch (error) {}
 
             expect(repository.database.length).toBe(0)
         })
     })
 
-    describe('Scenario: The conference is too long', () => {
+    describe('Scenario: the conference is too long', () => {
         const payload = {
             user: johnDoe,
             title: "My first conference",
@@ -147,15 +143,13 @@ describe("Feature: Organize conference", () => {
 
         it('should throw an error', async () => {
             await expect(() => useCase.execute(payload))
-                .rejects
-                .toThrow('The conference is too long (> 3 hours)')
+                    .rejects
+                    .toThrow("The conference is too long (> 3 hours)")
         })
 
-        it('should not creat a conference', async () => {
+        it('should not create a conference', async () => {
             try {
-                await expect(() => useCase.execute(payload))
-                .rejects
-                .toThrow()
+                await expect(() => useCase.execute(payload)).rejects.toThrow()
             } catch (error) {}
 
             expect(repository.database.length).toBe(0)

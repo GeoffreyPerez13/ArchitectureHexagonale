@@ -1,37 +1,63 @@
-import { addDays, addHours } from 'date-fns';
-import app from '../infrastructure/express_api/app';
-import request from 'supertest';
-import { User } from '../user/entities/user.entity';
-import container from '../infrastructure/express_api/config/dependency-injection';
+import { addDays, addHours } from 'date-fns'
+import { Application } from 'express'
+import request from 'supertest'
+import { IConferenceRepository } from '../conference/ports/conference-repository.interface'
+import container from '../infrastructure/express_api/config/dependency-injection'
+import { e2eUsers } from './seeds/user-seeds'
+import { TestApp } from './utils/test-app'
+import { e2eBooking } from './seeds/booking-seeds'
+import { e2eConference } from './seeds/conference-seeds'
 
 describe('Feature: Organize Conference', () => {
-    const johnDoe = new User({
-        id: 'john-doe',
-        emailAddress: 'johndoe@gmail.com',
-        password: 'qwerty'
-    });
-
-    let repository: any;
+    let testApp: TestApp
+    let app: Application
 
     beforeEach(async () => {
-        repository = container.resolve('userRepository');
-        await repository.create(johnDoe);
-    });
+        testApp = new TestApp()
+        await testApp.setup()
+        await testApp.loadAllFixtures([
+            e2eUsers.johnDoe,
+            e2eUsers.bob,
+            e2eUsers.alice,
+            e2eBooking.aliceBooking,
+            e2eBooking.bobBooking,
+            e2eConference.conference1
+        ])
+        app = testApp.expressApp
+    })
 
-    it('should organize a conference', async () => {
-        const token = Buffer.from(`${johnDoe.props.emailAddress}:${johnDoe.props.password}`).toString('base64');
+    afterAll(async () => {
+        await testApp.tearDown()
+    })
+
+    it('should organize a conference', async() => {
+        const startDate = addDays(new Date(), 4)
+        const endDate = addDays(addHours(new Date(), 2), 4)
 
         const result = await request(app)
-            .post('/conference')
-            .set('Authorization', `Basic ${token}`)
-            .send({
-                title: 'My first conference',
-                seats: 100,
-                startDate: addDays(new Date(), 4).toISOString(),
-                endDate: addDays(addHours(new Date(), 2), 4).toISOString()
-            });
+                            .post('/conference')
+                            .set('Authorization', e2eUsers.johnDoe.createAuthorizationToken())
+                            .send({
+                                title: 'My first conference',
+                                seats: 100,
+                                startDate: startDate.toISOString(),
+                                endDate: endDate.toISOString(),
+                            })
 
-        expect(result.status).toBe(201);
-        expect(result.body.data).toEqual({ id: expect.any(String) });
-    });
-});
+        expect(result.status).toBe(201)
+        expect(result.body.data).toEqual({id: expect.any(String)})
+
+        const conferenceRepository = container.resolve('conferenceRepository') as IConferenceRepository
+        const fetchedConference = await conferenceRepository.findById(result.body.data.id)
+
+        expect(fetchedConference).toBeDefined()
+        expect(fetchedConference?.props).toEqual({
+            id: result.body.data.id,
+            organizerId: e2eUsers.johnDoe.entity.props.id,
+            title: 'My first conference',
+            seats: 100,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+        })
+    })
+})
